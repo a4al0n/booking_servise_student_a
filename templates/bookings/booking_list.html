@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Все бронирования{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Все бронирования</h2>
+    <div class="stats">
+        <div class="stat-item">
+            <span class="stat-number">{{ total_bookings }}</span>
+            <span class="stat-label">Всего</span>
+        </div>
+        <div class="stat-item stat-success">
+            <span class="stat-number">{{ confirmed_count }}</span>
+            <span class="stat-label">Подтверждено</span>
+        </div>
+        <div class="stat-item stat-danger">
+            <span class="stat-number">{{ rejected_count }}</span>
+            <span class="stat-label">Отклонено</span>
+        </div>
+    </div>
+</div>
+
+<div class="filters">
+    <form method="get" class="filter-form">
+        <input 
+            type="email" 
+            name="email" 
+            placeholder="Email пользователя"
+            value="{{ request.GET.email }}"
+            class="form-control">
+        
+        <select name="status" class="form-control">
+            <option value="">Все статусы</option>
+            <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Подтверждено</option>
+            <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Отклонено</option>
+            <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>В ожидании</option>
+        </select>
+
+        <input 
+            type="date" 
+            name="date" 
+            placeholder="Дата"
+            value="{{ request.GET.date }}"
+            class="form-control">
+        
+        <button type="submit" class="btn btn-primary">Фильтр</button>
+        <a href="{% url 'booking_list' %}" class="btn btn-secondary">Сбросить</a>
+    </form>
+</div>
+
+{% if bookings %}
+<div class="table-container">
+    <table class="bookings-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Аудитория</th>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Email</th>
+                <th>Тип</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr class="status-{{ booking.status }}">
+                <td>{{ booking.id }}</td>
+                <td><strong>{{ booking.room_number }}</strong></td>
+                <td>{{ booking.booking_date|date:"d.m.Y" }}</td>
+                <td>{{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</td>
+                <td>{{ booking.user_email }}</td>
+                <td>{{ booking.get_booking_type_display }}</td>
+                <td>
+                    <span class="status-badge status-{{ booking.status }}">
+                        {{ booking.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'booking_detail' booking.pk %}" class="btn btn-sm">👁️</a>
+                    <form method="post" action="{% url 'booking_delete' booking.pk %}" style="display:inline;" 
+                          onsubmit="return confirm('Вы уверены, что хотите удалить это бронирование?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page=1" class="btn btn-sm">Первая</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">← Назад</a>
+    {% endif %}
+    
+    <span class="page-info">
+        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+    </span>
+    
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Далее →</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Последняя</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <p>📭 Бронирований не найдено</p>
+    <a href="{% url 'home' %}" class="btn btn-primary">Создать первое бронирование</a>
+</div>
+{% endif %}
+
+{% endblock %}

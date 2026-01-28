@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Бронирование #{{ booking.id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Детали бронирования #{{ booking.id }}</h2>
+    <div class="header-actions">
+        <a href="{% url 'booking_list' %}" class="btn btn-secondary">← Назад к списку</a>
+        <form method="post" action="{% url 'booking_delete' booking.pk %}" style="display:inline;"
+              onsubmit="return confirm('Вы уверены, что хотите удалить это бронирование?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">🗑️ Удалить</button>
+        </form>
+    </div>
+</div>
+
+<div class="booking-detail">
+    <div class="detail-card">
+        <div class="card-header status-{{ booking.status }}">
+            <h3>Информация о бронировании</h3>
+            <span class="status-badge status-{{ booking.status }}">
+                {% if booking.status == 'confirmed' %}✓{% elif booking.status == 'rejected' %}✗{% else %}⏳{% endif %}
+                {{ booking.get_status_display }}
+            </span>
+        </div>
+        
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>🚪 Аудитория</label>
+                    <value>{{ booking.room_number }}</value>
+                </div>
+                
+                <div class="info-item">
+                    <label>📅 Дата</label>
+                    <value>{{ booking.booking_date|date:"d.m.Y (l)" }}</value>
+                </div>
+                
+                <div class="info-item">
+                    <label>⏰ Время начала</label>
+                    <value>{{ booking.start_time|time:"H:i" }}</value>
+                </div>
+                
+                <div class="info-item">
+                    <label>⏰ Время окончания</label>
+                    <value>{{ booking.end_time|time:"H:i" }}</value>
+                </div>
+                
+                <div class="info-item">
+                    <label>👤 Email пользователя</label>
+                    <value>{{ booking.user_email }}</value>
+                </div>
+                
+                <div class="info-item">
+                    <label>📋 Тип бронирования</label>
+                    <value>{{ booking.get_booking_type_display }}</value>
+                </div>
+                
+                {% if booking.purpose %}
+                <div class="info-item full-width">
+                    <label>📝 Цель бронирования</label>
+                    <value>{{ booking.purpose }}</value>
+                </div>
+                {% endif %}
+                
+                <div class="info-item">
+                    <label>🕐 Создано</label>
+                    <value>{{ booking.created_at|date:"d.m.Y H:i" }}</value>
+                </div>
+                
+                <div class="info-item">
+                    <label>🕐 Обновлено</label>
+                    <value>{{ booking.updated_at|date:"d.m.Y H:i" }}</value>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if booking.availability_check_response %}
+    <div class="detail-card">
+        <div class="card-header">
+            <h3>Результат проверки доступности</h3>
+        </div>
+        
+        <div class="card-body">
+            <div class="availability-result">
+                {% if booking.availability_check_response.success %}
+                    {% if booking.availability_check_response.available %}
+                        <div class="alert alert-success">
+                            <strong>✅ Аудитория доступна</strong>
+                            <p>{{ booking.availability_check_response.message }}</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Аудитория недоступна</strong>
+                            <p>{{ booking.availability_check_response.message }}</p>
+                            
+                            {% if booking.availability_check_response.conflicts %}
+                            <div class="conflicts">
+                                <strong>Конфликты:</strong>
+                                <ul>
+                                    {% for conflict in booking.availability_check_response.conflicts %}
+                                    <li>{{ conflict }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-error">
+                        <strong>❌ Ошибка проверки доступности</strong>
+                        <p>{{ booking.availability_check_response.message }}</p>
+                    </div>
+                {% endif %}
+                
+                <details class="json-details">
+                    <summary>Полный ответ от сервиса (JSON)</summary>
+                    <pre><code>{{ booking.availability_check_response|pprint }}</code></pre>
+                </details>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

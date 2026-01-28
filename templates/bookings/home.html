@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Бронирование аудиторий{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h2>Создать новое бронирование</h2>
+    <p>Заполните форму для бронирования аудитории</p>
+</div>
+
+<div class="booking-form-container">
+    <form method="post" class="booking-form" id="bookingForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="user_email">Email пользователя *</label>
+            <input 
+                type="email" 
+                id="user_email" 
+                name="user_email" 
+                required
+                placeholder="example@mail.com"
+                class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="room_number">Номер аудитории *</label>
+            <input 
+                type="text" 
+                id="room_number" 
+                name="room_number" 
+                required
+                placeholder="101"
+                class="form-control">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="booking_date">Дата *</label>
+                <input 
+                    type="date" 
+                    id="booking_date" 
+                    name="booking_date" 
+                    required
+                    min="{{ today|date:'Y-m-d' }}"
+                    class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="start_time">Время начала *</label>
+                <input 
+                    type="time" 
+                    id="start_time" 
+                    name="start_time" 
+                    required
+                    class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="end_time">Время окончания *</label>
+                <input 
+                    type="time" 
+                    id="end_time" 
+                    name="end_time" 
+                    required
+                    class="form-control">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="booking_type">Тип бронирования *</label>
+            <select id="booking_type" name="booking_type" required class="form-control">
+                <option value="lesson">Занятие</option>
+                <option value="exam">Экзамен</option>
+                <option value="meeting">Собрание</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="purpose">Цель бронирования</label>
+            <textarea 
+                id="purpose" 
+                name="purpose" 
+                rows="3"
+                placeholder="Опишите цель бронирования..."
+                class="form-control"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            📅 Создать бронирование
+        </button>
+    </form>
+</div>
+
+{% if recent_bookings %}
+<div class="recent-bookings">
+    <h3>Последние бронирования</h3>
+    <div class="bookings-grid">
+        {% for booking in recent_bookings %}
+        <div class="booking-card status-{{ booking.status }}">
+            <div class="booking-header">
+                <span class="room-number">🚪 {{ booking.room_number }}</span>
+                <span class="status-badge status-{{ booking.status }}">
+                    {% if booking.status == 'confirmed' %}✓{% elif booking.status == 'rejected' %}✗{% else %}⏳{% endif %}
+                    {{ booking.get_status_display }}
+                </span>
+            </div>
+            <div class="booking-info">
+                <p>📅 {{ booking.booking_date|date:"d.m.Y" }}</p>
+                <p>⏰ {{ booking.start_time|time:"H:i" }} - {{ booking.end_time|time:"H:i" }}</p>
+                <p>👤 {{ booking.user_email }}</p>
+                <p>📋 {{ booking.get_booking_type_display }}</p>
+            </div>
+            <a href="{% url 'booking_detail' booking.pk %}" class="btn btn-sm">Подробнее</a>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="{% url 'booking_list' %}" class="btn btn-secondary">Посмотреть все бронирования →</a>
+</div>
+{% endif %}
+
+{% endblock %}
