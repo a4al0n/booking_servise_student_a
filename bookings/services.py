@@ -26,7 +26,7 @@ class AvailabilityService:
             Ответ от сервиса доступности
         """
         try:
-            self.base_url = settings.AVAILABILITY_SERVICE_URL + "/check-availability/"
+            self.base_url = settings.AVAILABILITY_SERVICE_URL
             url = f"{self.base_url}/check-availability/"
 
             # Формируем данные для отправки
